@@ -34,26 +34,26 @@ public class ProducerAppConfiguration {
   }
 
 
-  /**
-   * Produce a KeyValueAdapterResolver for Dapr.
-   * @param daprClient dapr client
-   * @param mapper object mapper
-   * @param daprStatestoreProperties properties to configure state store
-   * @return KeyValueAdapterResolver
-   */
-  @Bean
-  public KeyValueAdapterResolver keyValueAdapterResolver(DaprClient daprClient, ObjectMapper mapper,
-                                                         DaprStateStoreProperties daprStatestoreProperties) {
-    String storeName = daprStatestoreProperties.getName();
-    String bindingName = daprStatestoreProperties.getBinding();
-
-    return new DaprKeyValueAdapterResolver(daprClient, mapper, storeName, bindingName);
-  }
-
-  @Bean
-  public DaprKeyValueTemplate daprKeyValueTemplate(KeyValueAdapterResolver keyValueAdapterResolver) {
-    return new DaprKeyValueTemplate(keyValueAdapterResolver);
-  }
+//  /**
+//   * Produce a KeyValueAdapterResolver for Dapr.
+//   * @param daprClient dapr client
+//   * @param mapper object mapper
+//   * @param daprStatestoreProperties properties to configure state store
+//   * @return KeyValueAdapterResolver
+//   */
+//  @Bean
+//  public KeyValueAdapterResolver keyValueAdapterResolver(DaprClient daprClient, ObjectMapper mapper,
+//                                                         DaprStateStoreProperties daprStatestoreProperties) {
+//    String storeName = daprStatestoreProperties.getName();
+//    String bindingName = daprStatestoreProperties.getBinding();
+//
+//    return new DaprKeyValueAdapterResolver(daprClient, mapper, storeName, bindingName);
+//  }
+//
+//  @Bean
+//  public DaprKeyValueTemplate daprKeyValueTemplate(KeyValueAdapterResolver keyValueAdapterResolver) {
+//    return new DaprKeyValueTemplate(keyValueAdapterResolver);
+//  }
 
   @Bean
   public DaprMessagingTemplate<Order> messagingTemplate(DaprClient daprClient,

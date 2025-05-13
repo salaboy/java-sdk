@@ -31,9 +31,6 @@ public class OrdersRestController {
   private final Logger logger = LoggerFactory.getLogger(OrdersRestController.class);
 
   @Autowired
-  private OrderRepository repository;
-
-  @Autowired
   private DaprMessagingTemplate<Order> messagingTemplate;
 
   /**
@@ -44,26 +41,27 @@ public class OrdersRestController {
    */
   @PostMapping("/orders")
   public String storeOrder(@RequestBody Order order) {
-    logger.info("Storing Order: " + order);
-    repository.save(order);
     logger.info("Publishing Order Event: " + order);
     messagingTemplate.send("topic", order);
-    return "Order Stored and Event Published";
+    return "Order Event Published";
   }
 
   @GetMapping("/orders")
   public Iterable<Order> getAll() {
-    return repository.findAll();
+//    return repository.findAll();
+    return null;
   }
 
   @GetMapping("/orders/byItem/")
   public Iterable<Order> getAllByItem(@RequestParam("item") String item) {
-    return repository.findByItem(item);
+    return null;
+    //return repository.findByItem(item);
   }
 
   @GetMapping("/orders/byAmount/")
   public Iterable<Order> getAllByItem(@RequestParam("amount") Integer amount) {
-    return repository.findByAmount(amount);
+    return null;
+    //return repository.findByAmount(amount);
   }
 
 

@@ -12,6 +12,7 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.annotation.Configuration;
 
 import java.util.Map;
+import java.util.concurrent.Executors;
 
 @Configuration
 public class DaprWorkflowsConfiguration implements ApplicationContextAware {
@@ -45,6 +46,8 @@ public class DaprWorkflowsConfiguration implements ApplicationContextAware {
 
       workflowRuntimeBuilder.registerActivity(activity);
     }
+
+    workflowRuntimeBuilder.withExecutorService(Executors.newFixedThreadPool(3));
 
     WorkflowRuntime runtime = workflowRuntimeBuilder.build();
     LOGGER.info("Starting workflow runtime ... ");
