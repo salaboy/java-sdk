@@ -8,7 +8,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
-limitations under the License.
+ * limitations under the License.
 */
 
 package io.dapr.spring.boot.autoconfigure.client;
@@ -73,8 +73,9 @@ public class ObservationDaprClient implements DaprClient {
    * @param observationRegistry the Micrometer {@link ObservationRegistry} used to create spans
    */
   public ObservationDaprClient(DaprClient delegate, ObservationRegistry observationRegistry) {
-    this.delegate = delegate;
-    this.observationRegistry = observationRegistry;
+    this.delegate = java.util.Objects.requireNonNull(delegate, "delegate must not be null");
+    this.observationRegistry = java.util.Objects.requireNonNull(observationRegistry,
+        "observationRegistry must not be null");
   }
 
   // -------------------------------------------------------------------------
