@@ -83,17 +83,21 @@ public class ObservationDaprClient implements DaprClient {
   // -------------------------------------------------------------------------
 
   private <T> Mono<T> observe(Observation obs, Supplier<Mono<T>> monoSupplier) {
-    obs.start();
-    return monoSupplier.get()
-        .doOnError(obs::error)
-        .doFinally(signal -> obs.stop());
+    return Mono.defer(() -> {
+      obs.start();
+      return monoSupplier.get()
+          .doOnError(obs::error)
+          .doFinally(signal -> obs.stop());
+    });
   }
 
   private <T> Flux<T> observeFlux(Observation obs, Supplier<Flux<T>> fluxSupplier) {
-    obs.start();
-    return fluxSupplier.get()
-        .doOnError(obs::error)
-        .doFinally(signal -> obs.stop());
+    return Flux.defer(() -> {
+      obs.start();
+      return fluxSupplier.get()
+          .doOnError(obs::error)
+          .doFinally(signal -> obs.stop());
+    });
   }
 
   private static String safe(String value) {
