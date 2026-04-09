@@ -95,6 +95,10 @@ public class ObservationDaprClient implements DaprClient {
         .doFinally(signal -> obs.stop());
   }
 
+  private static String safe(String value) {
+    return value != null ? value : "";
+  }
+
   private Observation observation(String name) {
     return Observation.createNotStarted(name, observationRegistry);
   }
@@ -128,8 +132,8 @@ public class ObservationDaprClient implements DaprClient {
   public Mono<Void> publishEvent(String pubsubName, String topicName, Object data) {
     return observe(
         observation("dapr.client.publish_event")
-            .highCardinalityKeyValue("dapr.pubsub.name", pubsubName)
-            .highCardinalityKeyValue("dapr.topic.name", topicName),
+            .highCardinalityKeyValue("dapr.pubsub.name", safe(pubsubName))
+            .highCardinalityKeyValue("dapr.topic.name", safe(topicName)),
         () -> delegate.publishEvent(pubsubName, topicName, data));
   }
 
@@ -138,8 +142,8 @@ public class ObservationDaprClient implements DaprClient {
                                  Map<String, String> metadata) {
     return observe(
         observation("dapr.client.publish_event")
-            .highCardinalityKeyValue("dapr.pubsub.name", pubsubName)
-            .highCardinalityKeyValue("dapr.topic.name", topicName),
+            .highCardinalityKeyValue("dapr.pubsub.name", safe(pubsubName))
+            .highCardinalityKeyValue("dapr.topic.name", safe(topicName)),
         () -> delegate.publishEvent(pubsubName, topicName, data, metadata));
   }
 
@@ -147,8 +151,8 @@ public class ObservationDaprClient implements DaprClient {
   public Mono<Void> publishEvent(PublishEventRequest request) {
     return observe(
         observation("dapr.client.publish_event")
-            .highCardinalityKeyValue("dapr.pubsub.name", request.getPubsubName())
-            .highCardinalityKeyValue("dapr.topic.name", request.getTopic()),
+            .highCardinalityKeyValue("dapr.pubsub.name", safe(request.getPubsubName()))
+            .highCardinalityKeyValue("dapr.topic.name", safe(request.getTopic())),
         () -> delegate.publishEvent(request));
   }
 
@@ -156,8 +160,8 @@ public class ObservationDaprClient implements DaprClient {
   public <T> Mono<BulkPublishResponse<T>> publishEvents(BulkPublishRequest<T> request) {
     return observe(
         observation("dapr.client.publish_events")
-            .highCardinalityKeyValue("dapr.pubsub.name", request.getPubsubName())
-            .highCardinalityKeyValue("dapr.topic.name", request.getTopic()),
+            .highCardinalityKeyValue("dapr.pubsub.name", safe(request.getPubsubName()))
+            .highCardinalityKeyValue("dapr.topic.name", safe(request.getTopic())),
         () -> delegate.publishEvents(request));
   }
 
@@ -166,8 +170,8 @@ public class ObservationDaprClient implements DaprClient {
                                                          String contentType, List<T> events) {
     return observe(
         observation("dapr.client.publish_events")
-            .highCardinalityKeyValue("dapr.pubsub.name", pubsubName)
-            .highCardinalityKeyValue("dapr.topic.name", topicName),
+            .highCardinalityKeyValue("dapr.pubsub.name", safe(pubsubName))
+            .highCardinalityKeyValue("dapr.topic.name", safe(topicName)),
         () -> delegate.publishEvents(pubsubName, topicName, contentType, events));
   }
 
@@ -177,8 +181,8 @@ public class ObservationDaprClient implements DaprClient {
                                                          String contentType, T... events) {
     return observe(
         observation("dapr.client.publish_events")
-            .highCardinalityKeyValue("dapr.pubsub.name", pubsubName)
-            .highCardinalityKeyValue("dapr.topic.name", topicName),
+            .highCardinalityKeyValue("dapr.pubsub.name", safe(pubsubName))
+            .highCardinalityKeyValue("dapr.topic.name", safe(topicName)),
         () -> delegate.publishEvents(pubsubName, topicName, contentType, events));
   }
 
@@ -189,8 +193,8 @@ public class ObservationDaprClient implements DaprClient {
                                                          List<T> events) {
     return observe(
         observation("dapr.client.publish_events")
-            .highCardinalityKeyValue("dapr.pubsub.name", pubsubName)
-            .highCardinalityKeyValue("dapr.topic.name", topicName),
+            .highCardinalityKeyValue("dapr.pubsub.name", safe(pubsubName))
+            .highCardinalityKeyValue("dapr.topic.name", safe(topicName)),
         () -> delegate.publishEvents(pubsubName, topicName, contentType, requestMetadata, events));
   }
 
@@ -202,8 +206,8 @@ public class ObservationDaprClient implements DaprClient {
                                                          T... events) {
     return observe(
         observation("dapr.client.publish_events")
-            .highCardinalityKeyValue("dapr.pubsub.name", pubsubName)
-            .highCardinalityKeyValue("dapr.topic.name", topicName),
+            .highCardinalityKeyValue("dapr.pubsub.name", safe(pubsubName))
+            .highCardinalityKeyValue("dapr.topic.name", safe(topicName)),
         () -> delegate.publishEvents(pubsubName, topicName, contentType, requestMetadata, events));
   }
 
@@ -297,8 +301,8 @@ public class ObservationDaprClient implements DaprClient {
   public Mono<Void> invokeBinding(String bindingName, String operation, Object data) {
     return observe(
         observation("dapr.client.invoke_binding")
-            .highCardinalityKeyValue("dapr.binding.name", bindingName)
-            .highCardinalityKeyValue("dapr.binding.operation", operation),
+            .highCardinalityKeyValue("dapr.binding.name", safe(bindingName))
+            .highCardinalityKeyValue("dapr.binding.operation", safe(operation)),
         () -> delegate.invokeBinding(bindingName, operation, data));
   }
 
@@ -307,8 +311,8 @@ public class ObservationDaprClient implements DaprClient {
                                      Map<String, String> metadata) {
     return observe(
         observation("dapr.client.invoke_binding")
-            .highCardinalityKeyValue("dapr.binding.name", bindingName)
-            .highCardinalityKeyValue("dapr.binding.operation", operation),
+            .highCardinalityKeyValue("dapr.binding.name", safe(bindingName))
+            .highCardinalityKeyValue("dapr.binding.operation", safe(operation)),
         () -> delegate.invokeBinding(bindingName, operation, data, metadata));
   }
 
@@ -317,8 +321,8 @@ public class ObservationDaprClient implements DaprClient {
                                     TypeRef<T> type) {
     return observe(
         observation("dapr.client.invoke_binding")
-            .highCardinalityKeyValue("dapr.binding.name", bindingName)
-            .highCardinalityKeyValue("dapr.binding.operation", operation),
+            .highCardinalityKeyValue("dapr.binding.name", safe(bindingName))
+            .highCardinalityKeyValue("dapr.binding.operation", safe(operation)),
         () -> delegate.invokeBinding(bindingName, operation, data, type));
   }
 
@@ -327,8 +331,8 @@ public class ObservationDaprClient implements DaprClient {
                                     Class<T> clazz) {
     return observe(
         observation("dapr.client.invoke_binding")
-            .highCardinalityKeyValue("dapr.binding.name", bindingName)
-            .highCardinalityKeyValue("dapr.binding.operation", operation),
+            .highCardinalityKeyValue("dapr.binding.name", safe(bindingName))
+            .highCardinalityKeyValue("dapr.binding.operation", safe(operation)),
         () -> delegate.invokeBinding(bindingName, operation, data, clazz));
   }
 
@@ -337,8 +341,8 @@ public class ObservationDaprClient implements DaprClient {
                                     Map<String, String> metadata, TypeRef<T> type) {
     return observe(
         observation("dapr.client.invoke_binding")
-            .highCardinalityKeyValue("dapr.binding.name", bindingName)
-            .highCardinalityKeyValue("dapr.binding.operation", operation),
+            .highCardinalityKeyValue("dapr.binding.name", safe(bindingName))
+            .highCardinalityKeyValue("dapr.binding.operation", safe(operation)),
         () -> delegate.invokeBinding(bindingName, operation, data, metadata, type));
   }
 
@@ -347,8 +351,8 @@ public class ObservationDaprClient implements DaprClient {
                                     Map<String, String> metadata, Class<T> clazz) {
     return observe(
         observation("dapr.client.invoke_binding")
-            .highCardinalityKeyValue("dapr.binding.name", bindingName)
-            .highCardinalityKeyValue("dapr.binding.operation", operation),
+            .highCardinalityKeyValue("dapr.binding.name", safe(bindingName))
+            .highCardinalityKeyValue("dapr.binding.operation", safe(operation)),
         () -> delegate.invokeBinding(bindingName, operation, data, metadata, clazz));
   }
 
@@ -356,8 +360,8 @@ public class ObservationDaprClient implements DaprClient {
   public Mono<Void> invokeBinding(InvokeBindingRequest request) {
     return observe(
         observation("dapr.client.invoke_binding")
-            .highCardinalityKeyValue("dapr.binding.name", request.getName())
-            .highCardinalityKeyValue("dapr.binding.operation", request.getOperation()),
+            .highCardinalityKeyValue("dapr.binding.name", safe(request.getName()))
+            .highCardinalityKeyValue("dapr.binding.operation", safe(request.getOperation())),
         () -> delegate.invokeBinding(request));
   }
 
@@ -365,8 +369,8 @@ public class ObservationDaprClient implements DaprClient {
   public <T> Mono<T> invokeBinding(InvokeBindingRequest request, TypeRef<T> type) {
     return observe(
         observation("dapr.client.invoke_binding")
-            .highCardinalityKeyValue("dapr.binding.name", request.getName())
-            .highCardinalityKeyValue("dapr.binding.operation", request.getOperation()),
+            .highCardinalityKeyValue("dapr.binding.name", safe(request.getName()))
+            .highCardinalityKeyValue("dapr.binding.operation", safe(request.getOperation())),
         () -> delegate.invokeBinding(request, type));
   }
 
@@ -378,8 +382,8 @@ public class ObservationDaprClient implements DaprClient {
   public <T> Mono<State<T>> getState(String storeName, State<T> state, TypeRef<T> type) {
     return observe(
         observation("dapr.client.get_state")
-            .highCardinalityKeyValue("dapr.store.name", storeName)
-            .highCardinalityKeyValue("dapr.state.key", state.getKey()),
+            .highCardinalityKeyValue("dapr.store.name", safe(storeName))
+            .highCardinalityKeyValue("dapr.state.key", safe(state.getKey())),
         () -> delegate.getState(storeName, state, type));
   }
 
@@ -387,8 +391,8 @@ public class ObservationDaprClient implements DaprClient {
   public <T> Mono<State<T>> getState(String storeName, State<T> state, Class<T> clazz) {
     return observe(
         observation("dapr.client.get_state")
-            .highCardinalityKeyValue("dapr.store.name", storeName)
-            .highCardinalityKeyValue("dapr.state.key", state.getKey()),
+            .highCardinalityKeyValue("dapr.store.name", safe(storeName))
+            .highCardinalityKeyValue("dapr.state.key", safe(state.getKey())),
         () -> delegate.getState(storeName, state, clazz));
   }
 
@@ -396,8 +400,8 @@ public class ObservationDaprClient implements DaprClient {
   public <T> Mono<State<T>> getState(String storeName, String key, TypeRef<T> type) {
     return observe(
         observation("dapr.client.get_state")
-            .highCardinalityKeyValue("dapr.store.name", storeName)
-            .highCardinalityKeyValue("dapr.state.key", key),
+            .highCardinalityKeyValue("dapr.store.name", safe(storeName))
+            .highCardinalityKeyValue("dapr.state.key", safe(key)),
         () -> delegate.getState(storeName, key, type));
   }
 
@@ -405,8 +409,8 @@ public class ObservationDaprClient implements DaprClient {
   public <T> Mono<State<T>> getState(String storeName, String key, Class<T> clazz) {
     return observe(
         observation("dapr.client.get_state")
-            .highCardinalityKeyValue("dapr.store.name", storeName)
-            .highCardinalityKeyValue("dapr.state.key", key),
+            .highCardinalityKeyValue("dapr.store.name", safe(storeName))
+            .highCardinalityKeyValue("dapr.state.key", safe(key)),
         () -> delegate.getState(storeName, key, clazz));
   }
 
@@ -415,8 +419,8 @@ public class ObservationDaprClient implements DaprClient {
                                       TypeRef<T> type) {
     return observe(
         observation("dapr.client.get_state")
-            .highCardinalityKeyValue("dapr.store.name", storeName)
-            .highCardinalityKeyValue("dapr.state.key", key),
+            .highCardinalityKeyValue("dapr.store.name", safe(storeName))
+            .highCardinalityKeyValue("dapr.state.key", safe(key)),
         () -> delegate.getState(storeName, key, options, type));
   }
 
@@ -425,8 +429,8 @@ public class ObservationDaprClient implements DaprClient {
                                       Class<T> clazz) {
     return observe(
         observation("dapr.client.get_state")
-            .highCardinalityKeyValue("dapr.store.name", storeName)
-            .highCardinalityKeyValue("dapr.state.key", key),
+            .highCardinalityKeyValue("dapr.store.name", safe(storeName))
+            .highCardinalityKeyValue("dapr.state.key", safe(key)),
         () -> delegate.getState(storeName, key, options, clazz));
   }
 
@@ -434,8 +438,8 @@ public class ObservationDaprClient implements DaprClient {
   public <T> Mono<State<T>> getState(GetStateRequest request, TypeRef<T> type) {
     return observe(
         observation("dapr.client.get_state")
-            .highCardinalityKeyValue("dapr.store.name", request.getStoreName())
-            .highCardinalityKeyValue("dapr.state.key", request.getKey()),
+            .highCardinalityKeyValue("dapr.store.name", safe(request.getStoreName()))
+            .highCardinalityKeyValue("dapr.state.key", safe(request.getKey())),
         () -> delegate.getState(request, type));
   }
 
@@ -444,7 +448,7 @@ public class ObservationDaprClient implements DaprClient {
                                                 TypeRef<T> type) {
     return observe(
         observation("dapr.client.get_bulk_state")
-            .highCardinalityKeyValue("dapr.store.name", storeName),
+            .highCardinalityKeyValue("dapr.store.name", safe(storeName)),
         () -> delegate.getBulkState(storeName, keys, type));
   }
 
@@ -453,7 +457,7 @@ public class ObservationDaprClient implements DaprClient {
                                                 Class<T> clazz) {
     return observe(
         observation("dapr.client.get_bulk_state")
-            .highCardinalityKeyValue("dapr.store.name", storeName),
+            .highCardinalityKeyValue("dapr.store.name", safe(storeName)),
         () -> delegate.getBulkState(storeName, keys, clazz));
   }
 
@@ -461,7 +465,7 @@ public class ObservationDaprClient implements DaprClient {
   public <T> Mono<List<State<T>>> getBulkState(GetBulkStateRequest request, TypeRef<T> type) {
     return observe(
         observation("dapr.client.get_bulk_state")
-            .highCardinalityKeyValue("dapr.store.name", request.getStoreName()),
+            .highCardinalityKeyValue("dapr.store.name", safe(request.getStoreName())),
         () -> delegate.getBulkState(request, type));
   }
 
@@ -470,7 +474,7 @@ public class ObservationDaprClient implements DaprClient {
                                              List<TransactionalStateOperation<?>> operations) {
     return observe(
         observation("dapr.client.execute_state_transaction")
-            .highCardinalityKeyValue("dapr.store.name", storeName),
+            .highCardinalityKeyValue("dapr.store.name", safe(storeName)),
         () -> delegate.executeStateTransaction(storeName, operations));
   }
 
@@ -478,7 +482,7 @@ public class ObservationDaprClient implements DaprClient {
   public Mono<Void> executeStateTransaction(ExecuteStateTransactionRequest request) {
     return observe(
         observation("dapr.client.execute_state_transaction")
-            .highCardinalityKeyValue("dapr.store.name", request.getStateStoreName()),
+            .highCardinalityKeyValue("dapr.store.name", safe(request.getStateStoreName())),
         () -> delegate.executeStateTransaction(request));
   }
 
@@ -486,7 +490,7 @@ public class ObservationDaprClient implements DaprClient {
   public Mono<Void> saveBulkState(String storeName, List<State<?>> states) {
     return observe(
         observation("dapr.client.save_bulk_state")
-            .highCardinalityKeyValue("dapr.store.name", storeName),
+            .highCardinalityKeyValue("dapr.store.name", safe(storeName)),
         () -> delegate.saveBulkState(storeName, states));
   }
 
@@ -494,7 +498,7 @@ public class ObservationDaprClient implements DaprClient {
   public Mono<Void> saveBulkState(SaveStateRequest request) {
     return observe(
         observation("dapr.client.save_bulk_state")
-            .highCardinalityKeyValue("dapr.store.name", request.getStoreName()),
+            .highCardinalityKeyValue("dapr.store.name", safe(request.getStoreName())),
         () -> delegate.saveBulkState(request));
   }
 
@@ -502,8 +506,8 @@ public class ObservationDaprClient implements DaprClient {
   public Mono<Void> saveState(String storeName, String key, Object value) {
     return observe(
         observation("dapr.client.save_state")
-            .highCardinalityKeyValue("dapr.store.name", storeName)
-            .highCardinalityKeyValue("dapr.state.key", key),
+            .highCardinalityKeyValue("dapr.store.name", safe(storeName))
+            .highCardinalityKeyValue("dapr.state.key", safe(key)),
         () -> delegate.saveState(storeName, key, value));
   }
 
@@ -512,8 +516,8 @@ public class ObservationDaprClient implements DaprClient {
                                StateOptions options) {
     return observe(
         observation("dapr.client.save_state")
-            .highCardinalityKeyValue("dapr.store.name", storeName)
-            .highCardinalityKeyValue("dapr.state.key", key),
+            .highCardinalityKeyValue("dapr.store.name", safe(storeName))
+            .highCardinalityKeyValue("dapr.state.key", safe(key)),
         () -> delegate.saveState(storeName, key, etag, value, options));
   }
 
@@ -522,8 +526,8 @@ public class ObservationDaprClient implements DaprClient {
                                Map<String, String> meta, StateOptions options) {
     return observe(
         observation("dapr.client.save_state")
-            .highCardinalityKeyValue("dapr.store.name", storeName)
-            .highCardinalityKeyValue("dapr.state.key", key),
+            .highCardinalityKeyValue("dapr.store.name", safe(storeName))
+            .highCardinalityKeyValue("dapr.state.key", safe(key)),
         () -> delegate.saveState(storeName, key, etag, value, meta, options));
   }
 
@@ -531,8 +535,8 @@ public class ObservationDaprClient implements DaprClient {
   public Mono<Void> deleteState(String storeName, String key) {
     return observe(
         observation("dapr.client.delete_state")
-            .highCardinalityKeyValue("dapr.store.name", storeName)
-            .highCardinalityKeyValue("dapr.state.key", key),
+            .highCardinalityKeyValue("dapr.store.name", safe(storeName))
+            .highCardinalityKeyValue("dapr.state.key", safe(key)),
         () -> delegate.deleteState(storeName, key));
   }
 
@@ -541,8 +545,8 @@ public class ObservationDaprClient implements DaprClient {
                                  StateOptions options) {
     return observe(
         observation("dapr.client.delete_state")
-            .highCardinalityKeyValue("dapr.store.name", storeName)
-            .highCardinalityKeyValue("dapr.state.key", key),
+            .highCardinalityKeyValue("dapr.store.name", safe(storeName))
+            .highCardinalityKeyValue("dapr.state.key", safe(key)),
         () -> delegate.deleteState(storeName, key, etag, options));
   }
 
@@ -550,8 +554,8 @@ public class ObservationDaprClient implements DaprClient {
   public Mono<Void> deleteState(DeleteStateRequest request) {
     return observe(
         observation("dapr.client.delete_state")
-            .highCardinalityKeyValue("dapr.store.name", request.getStateStoreName())
-            .highCardinalityKeyValue("dapr.state.key", request.getKey()),
+            .highCardinalityKeyValue("dapr.store.name", safe(request.getStateStoreName()))
+            .highCardinalityKeyValue("dapr.state.key", safe(request.getKey())),
         () -> delegate.deleteState(request));
   }
 
@@ -564,8 +568,8 @@ public class ObservationDaprClient implements DaprClient {
                                               Map<String, String> metadata) {
     return observe(
         observation("dapr.client.get_secret")
-            .highCardinalityKeyValue("dapr.secret.store", storeName)
-            .highCardinalityKeyValue("dapr.secret.name", secretName),
+            .highCardinalityKeyValue("dapr.secret.store", safe(storeName))
+            .highCardinalityKeyValue("dapr.secret.name", safe(secretName)),
         () -> delegate.getSecret(storeName, secretName, metadata));
   }
 
@@ -573,8 +577,8 @@ public class ObservationDaprClient implements DaprClient {
   public Mono<Map<String, String>> getSecret(String storeName, String secretName) {
     return observe(
         observation("dapr.client.get_secret")
-            .highCardinalityKeyValue("dapr.secret.store", storeName)
-            .highCardinalityKeyValue("dapr.secret.name", secretName),
+            .highCardinalityKeyValue("dapr.secret.store", safe(storeName))
+            .highCardinalityKeyValue("dapr.secret.name", safe(secretName)),
         () -> delegate.getSecret(storeName, secretName));
   }
 
@@ -582,8 +586,8 @@ public class ObservationDaprClient implements DaprClient {
   public Mono<Map<String, String>> getSecret(GetSecretRequest request) {
     return observe(
         observation("dapr.client.get_secret")
-            .highCardinalityKeyValue("dapr.secret.store", request.getStoreName())
-            .highCardinalityKeyValue("dapr.secret.name", request.getKey()),
+            .highCardinalityKeyValue("dapr.secret.store", safe(request.getStoreName()))
+            .highCardinalityKeyValue("dapr.secret.name", safe(request.getKey())),
         () -> delegate.getSecret(request));
   }
 
@@ -591,7 +595,7 @@ public class ObservationDaprClient implements DaprClient {
   public Mono<Map<String, Map<String, String>>> getBulkSecret(String storeName) {
     return observe(
         observation("dapr.client.get_bulk_secret")
-            .highCardinalityKeyValue("dapr.secret.store", storeName),
+            .highCardinalityKeyValue("dapr.secret.store", safe(storeName)),
         () -> delegate.getBulkSecret(storeName));
   }
 
@@ -600,7 +604,7 @@ public class ObservationDaprClient implements DaprClient {
                                                                Map<String, String> metadata) {
     return observe(
         observation("dapr.client.get_bulk_secret")
-            .highCardinalityKeyValue("dapr.secret.store", storeName),
+            .highCardinalityKeyValue("dapr.secret.store", safe(storeName)),
         () -> delegate.getBulkSecret(storeName, metadata));
   }
 
@@ -608,7 +612,7 @@ public class ObservationDaprClient implements DaprClient {
   public Mono<Map<String, Map<String, String>>> getBulkSecret(GetBulkSecretRequest request) {
     return observe(
         observation("dapr.client.get_bulk_secret")
-            .highCardinalityKeyValue("dapr.secret.store", request.getStoreName()),
+            .highCardinalityKeyValue("dapr.secret.store", safe(request.getStoreName())),
         () -> delegate.getBulkSecret(request));
   }
 
@@ -620,8 +624,8 @@ public class ObservationDaprClient implements DaprClient {
   public Mono<ConfigurationItem> getConfiguration(String storeName, String key) {
     return observe(
         observation("dapr.client.get_configuration")
-            .highCardinalityKeyValue("dapr.configuration.store", storeName)
-            .highCardinalityKeyValue("dapr.configuration.key", key),
+            .highCardinalityKeyValue("dapr.configuration.store", safe(storeName))
+            .highCardinalityKeyValue("dapr.configuration.key", safe(key)),
         () -> delegate.getConfiguration(storeName, key));
   }
 
@@ -630,8 +634,8 @@ public class ObservationDaprClient implements DaprClient {
                                                    Map<String, String> metadata) {
     return observe(
         observation("dapr.client.get_configuration")
-            .highCardinalityKeyValue("dapr.configuration.store", storeName)
-            .highCardinalityKeyValue("dapr.configuration.key", key),
+            .highCardinalityKeyValue("dapr.configuration.store", safe(storeName))
+            .highCardinalityKeyValue("dapr.configuration.key", safe(key)),
         () -> delegate.getConfiguration(storeName, key, metadata));
   }
 
@@ -639,7 +643,7 @@ public class ObservationDaprClient implements DaprClient {
   public Mono<Map<String, ConfigurationItem>> getConfiguration(String storeName, String... keys) {
     return observe(
         observation("dapr.client.get_configuration")
-            .highCardinalityKeyValue("dapr.configuration.store", storeName),
+            .highCardinalityKeyValue("dapr.configuration.store", safe(storeName)),
         () -> delegate.getConfiguration(storeName, keys));
   }
 
@@ -648,7 +652,7 @@ public class ObservationDaprClient implements DaprClient {
                                                                 Map<String, String> metadata) {
     return observe(
         observation("dapr.client.get_configuration")
-            .highCardinalityKeyValue("dapr.configuration.store", storeName),
+            .highCardinalityKeyValue("dapr.configuration.store", safe(storeName)),
         () -> delegate.getConfiguration(storeName, keys, metadata));
   }
 
@@ -656,7 +660,7 @@ public class ObservationDaprClient implements DaprClient {
   public Mono<Map<String, ConfigurationItem>> getConfiguration(GetConfigurationRequest request) {
     return observe(
         observation("dapr.client.get_configuration")
-            .highCardinalityKeyValue("dapr.configuration.store", request.getStoreName()),
+            .highCardinalityKeyValue("dapr.configuration.store", safe(request.getStoreName())),
         () -> delegate.getConfiguration(request));
   }
 
@@ -665,7 +669,7 @@ public class ObservationDaprClient implements DaprClient {
                                                                       String... keys) {
     return observeFlux(
         observation("dapr.client.subscribe_configuration")
-            .highCardinalityKeyValue("dapr.configuration.store", storeName),
+            .highCardinalityKeyValue("dapr.configuration.store", safe(storeName)),
         () -> delegate.subscribeConfiguration(storeName, keys));
   }
 
@@ -675,7 +679,7 @@ public class ObservationDaprClient implements DaprClient {
                                                                       Map<String, String> metadata) {
     return observeFlux(
         observation("dapr.client.subscribe_configuration")
-            .highCardinalityKeyValue("dapr.configuration.store", storeName),
+            .highCardinalityKeyValue("dapr.configuration.store", safe(storeName)),
         () -> delegate.subscribeConfiguration(storeName, keys, metadata));
   }
 
@@ -684,7 +688,7 @@ public class ObservationDaprClient implements DaprClient {
       SubscribeConfigurationRequest request) {
     return observeFlux(
         observation("dapr.client.subscribe_configuration")
-            .highCardinalityKeyValue("dapr.configuration.store", request.getStoreName()),
+            .highCardinalityKeyValue("dapr.configuration.store", safe(request.getStoreName())),
         () -> delegate.subscribeConfiguration(request));
   }
 
@@ -693,7 +697,7 @@ public class ObservationDaprClient implements DaprClient {
                                                                           String storeName) {
     return observe(
         observation("dapr.client.unsubscribe_configuration")
-            .highCardinalityKeyValue("dapr.configuration.store", storeName),
+            .highCardinalityKeyValue("dapr.configuration.store", safe(storeName)),
         () -> delegate.unsubscribeConfiguration(id, storeName));
   }
 
@@ -702,7 +706,7 @@ public class ObservationDaprClient implements DaprClient {
       UnsubscribeConfigurationRequest request) {
     return observe(
         observation("dapr.client.unsubscribe_configuration")
-            .highCardinalityKeyValue("dapr.configuration.store", request.getStoreName()),
+            .highCardinalityKeyValue("dapr.configuration.store", safe(request.getStoreName())),
         () -> delegate.unsubscribeConfiguration(request));
   }
 
@@ -732,7 +736,7 @@ public class ObservationDaprClient implements DaprClient {
   public Mono<Void> scheduleJob(ScheduleJobRequest scheduleJobRequest) {
     return observe(
         observation("dapr.client.schedule_job")
-            .highCardinalityKeyValue("dapr.job.name", scheduleJobRequest.getName()),
+            .highCardinalityKeyValue("dapr.job.name", safe(scheduleJobRequest.getName())),
         () -> delegate.scheduleJob(scheduleJobRequest));
   }
 
@@ -740,7 +744,7 @@ public class ObservationDaprClient implements DaprClient {
   public Mono<GetJobResponse> getJob(GetJobRequest getJobRequest) {
     return observe(
         observation("dapr.client.get_job")
-            .highCardinalityKeyValue("dapr.job.name", getJobRequest.getName()),
+            .highCardinalityKeyValue("dapr.job.name", safe(getJobRequest.getName())),
         () -> delegate.getJob(getJobRequest));
   }
 
@@ -748,7 +752,7 @@ public class ObservationDaprClient implements DaprClient {
   public Mono<Void> deleteJob(DeleteJobRequest deleteJobRequest) {
     return observe(
         observation("dapr.client.delete_job")
-            .highCardinalityKeyValue("dapr.job.name", deleteJobRequest.getName()),
+            .highCardinalityKeyValue("dapr.job.name", safe(deleteJobRequest.getName())),
         () -> delegate.deleteJob(deleteJobRequest));
   }
 }
