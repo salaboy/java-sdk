@@ -8,7 +8,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License.
+limitations under the License.
 */
 
 package io.dapr.spring.boot4.autoconfigure.client;
@@ -23,6 +23,7 @@ import io.micrometer.observation.ObservationRegistry;
 
 import javax.annotation.Nullable;
 import java.time.Duration;
+import java.util.Objects;
 import java.util.concurrent.TimeoutException;
 
 /**
@@ -50,7 +51,7 @@ public class ObservationDaprWorkflowClient extends DaprWorkflowClient {
   public ObservationDaprWorkflowClient(Properties properties,
                                         ObservationRegistry observationRegistry) {
     super(properties);
-    this.observationRegistry = java.util.Objects.requireNonNull(observationRegistry,
+    this.observationRegistry = Objects.requireNonNull(observationRegistry,
         "observationRegistry must not be null");
   }
 

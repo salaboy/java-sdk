@@ -347,6 +347,20 @@ class ObservationDaprClientTest {
   }
 
   // -------------------------------------------------------------------------
+  // Deferred start — observation must not leak if Mono is never subscribed
+  // -------------------------------------------------------------------------
+
+  @Test
+  @DisplayName("Observation does not start if the returned Mono is never subscribed")
+  void observationDoesNotStartWithoutSubscription() {
+    // Call the method but do NOT subscribe (no .block())
+    client.publishEvent("pubsub", "topic", "data");
+
+    // Registry must be empty — no observation was started
+    TestObservationRegistryAssert.assertThat(registry).doesNotHaveAnyObservation();
+  }
+
+  // -------------------------------------------------------------------------
   // Deprecated methods — must NOT create spans
   // -------------------------------------------------------------------------
 
