@@ -14,12 +14,23 @@ limitations under the License.
 package io.dapr.spring.boot4.autoconfigure.client;
 
 import io.dapr.config.Properties;
+import io.dapr.internal.opencensus.GrpcHelper;
 import io.dapr.workflows.Workflow;
 import io.dapr.workflows.client.DaprWorkflowClient;
 import io.dapr.workflows.client.NewWorkflowOptions;
 import io.dapr.workflows.client.WorkflowState;
+import io.grpc.CallOptions;
+import io.grpc.Channel;
+import io.grpc.ClientCall;
+import io.grpc.ClientInterceptor;
+import io.grpc.ForwardingClientCall;
+import io.grpc.Metadata;
+import io.grpc.MethodDescriptor;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.SpanContext;
+import reactor.util.context.Context;
 
 import javax.annotation.Nullable;
 import java.time.Duration;
@@ -34,7 +45,14 @@ import java.util.concurrent.TimeoutException;
  * {@code DaprWorkflowClient} without any code changes. Deprecated methods fall through to the
  * parent implementation without any observation.
  *
- * <p><b>Constructor note:</b> calling {@code super(properties)} eagerly creates a gRPC
+ * <p><b>Trace propagation:</b> an {@link OtelTracingClientInterceptor} is registered on the gRPC
+ * channel. For each synchronous workflow RPC, the observation opens an OTel scope (via
+ * {@link Observation#openScope()}) before calling {@code super.*}, making the observation span the
+ * current OTel span in thread-local. The interceptor then reads {@link Span#current()} and injects
+ * its W3C {@code traceparent} (and {@code grpc-trace-bin}) into the gRPC request headers so the
+ * Dapr sidecar receives the full trace context.
+ *
+ * <p><b>Constructor note:</b> calling {@code super(properties, interceptor)} eagerly creates a gRPC
  * {@code ManagedChannel}, but the actual TCP connection is established lazily on the first RPC call,
  * so construction succeeds even when the Dapr sidecar is not yet available.
  */
@@ -50,7 +68,7 @@ public class ObservationDaprWorkflowClient extends DaprWorkflowClient {
    */
   public ObservationDaprWorkflowClient(Properties properties,
                                         ObservationRegistry observationRegistry) {
-    super(properties);
+    super(properties, new OtelTracingClientInterceptor());
     this.observationRegistry = Objects.requireNonNull(observationRegistry,
         "observationRegistry must not be null");
   }
@@ -75,7 +93,9 @@ public class ObservationDaprWorkflowClient extends DaprWorkflowClient {
         .highCardinalityKeyValue("dapr.workflow.name", name)
         .start();
     try {
-      return super.scheduleNewWorkflow(name);
+      try (Observation.Scope ignored = obs.openScope()) {
+        return super.scheduleNewWorkflow(name);
+      }
     } catch (RuntimeException e) {
       obs.error(e);
       throw e;
@@ -90,7 +110,9 @@ public class ObservationDaprWorkflowClient extends DaprWorkflowClient {
         .highCardinalityKeyValue("dapr.workflow.name", name)
         .start();
     try {
-      return super.scheduleNewWorkflow(name, input);
+      try (Observation.Scope ignored = obs.openScope()) {
+        return super.scheduleNewWorkflow(name, input);
+      }
     } catch (RuntimeException e) {
       obs.error(e);
       throw e;
@@ -108,7 +130,9 @@ public class ObservationDaprWorkflowClient extends DaprWorkflowClient {
             instanceId != null ? instanceId : "")
         .start();
     try {
-      return super.scheduleNewWorkflow(name, input, instanceId);
+      try (Observation.Scope ignored = obs.openScope()) {
+        return super.scheduleNewWorkflow(name, input, instanceId);
+      }
     } catch (RuntimeException e) {
       obs.error(e);
       throw e;
@@ -127,7 +151,9 @@ public class ObservationDaprWorkflowClient extends DaprWorkflowClient {
         .highCardinalityKeyValue("dapr.workflow.instance_id", instanceId)
         .start();
     try {
-      return super.scheduleNewWorkflow(name, options);
+      try (Observation.Scope ignored = obs.openScope()) {
+        return super.scheduleNewWorkflow(name, options);
+      }
     } catch (RuntimeException e) {
       obs.error(e);
       throw e;
@@ -146,7 +172,9 @@ public class ObservationDaprWorkflowClient extends DaprWorkflowClient {
         .highCardinalityKeyValue("dapr.workflow.instance_id", workflowInstanceId)
         .start();
     try {
-      super.suspendWorkflow(workflowInstanceId, reason);
+      try (Observation.Scope ignored = obs.openScope()) {
+        super.suspendWorkflow(workflowInstanceId, reason);
+      }
     } catch (RuntimeException e) {
       obs.error(e);
       throw e;
@@ -161,7 +189,9 @@ public class ObservationDaprWorkflowClient extends DaprWorkflowClient {
         .highCardinalityKeyValue("dapr.workflow.instance_id", workflowInstanceId)
         .start();
     try {
-      super.resumeWorkflow(workflowInstanceId, reason);
+      try (Observation.Scope ignored = obs.openScope()) {
+        super.resumeWorkflow(workflowInstanceId, reason);
+      }
     } catch (RuntimeException e) {
       obs.error(e);
       throw e;
@@ -176,7 +206,9 @@ public class ObservationDaprWorkflowClient extends DaprWorkflowClient {
         .highCardinalityKeyValue("dapr.workflow.instance_id", workflowInstanceId)
         .start();
     try {
-      super.terminateWorkflow(workflowInstanceId, output);
+      try (Observation.Scope ignored = obs.openScope()) {
+        super.terminateWorkflow(workflowInstanceId, output);
+      }
     } catch (RuntimeException e) {
       obs.error(e);
       throw e;
@@ -196,7 +228,9 @@ public class ObservationDaprWorkflowClient extends DaprWorkflowClient {
         .highCardinalityKeyValue("dapr.workflow.instance_id", instanceId)
         .start();
     try {
-      return super.getWorkflowState(instanceId, getInputsAndOutputs);
+      try (Observation.Scope ignored = obs.openScope()) {
+        return super.getWorkflowState(instanceId, getInputsAndOutputs);
+      }
     } catch (RuntimeException e) {
       obs.error(e);
       throw e;
@@ -217,7 +251,9 @@ public class ObservationDaprWorkflowClient extends DaprWorkflowClient {
         .highCardinalityKeyValue("dapr.workflow.instance_id", instanceId)
         .start();
     try {
-      return super.waitForWorkflowStart(instanceId, timeout, getInputsAndOutputs);
+      try (Observation.Scope ignored = obs.openScope()) {
+        return super.waitForWorkflowStart(instanceId, timeout, getInputsAndOutputs);
+      }
     } catch (TimeoutException e) {
       obs.error(e);
       throw e;
@@ -238,7 +274,9 @@ public class ObservationDaprWorkflowClient extends DaprWorkflowClient {
         .highCardinalityKeyValue("dapr.workflow.instance_id", instanceId)
         .start();
     try {
-      return super.waitForWorkflowCompletion(instanceId, timeout, getInputsAndOutputs);
+      try (Observation.Scope ignored = obs.openScope()) {
+        return super.waitForWorkflowCompletion(instanceId, timeout, getInputsAndOutputs);
+      }
     } catch (TimeoutException e) {
       obs.error(e);
       throw e;
@@ -261,7 +299,9 @@ public class ObservationDaprWorkflowClient extends DaprWorkflowClient {
         .highCardinalityKeyValue("dapr.workflow.event_name", eventName)
         .start();
     try {
-      super.raiseEvent(workflowInstanceId, eventName, eventPayload);
+      try (Observation.Scope ignored = obs.openScope()) {
+        super.raiseEvent(workflowInstanceId, eventName, eventPayload);
+      }
     } catch (RuntimeException e) {
       obs.error(e);
       throw e;
@@ -280,7 +320,9 @@ public class ObservationDaprWorkflowClient extends DaprWorkflowClient {
         .highCardinalityKeyValue("dapr.workflow.instance_id", workflowInstanceId)
         .start();
     try {
-      return super.purgeWorkflow(workflowInstanceId);
+      try (Observation.Scope ignored = obs.openScope()) {
+        return super.purgeWorkflow(workflowInstanceId);
+      }
     } catch (RuntimeException e) {
       obs.error(e);
       throw e;
@@ -292,4 +334,61 @@ public class ObservationDaprWorkflowClient extends DaprWorkflowClient {
   // Deprecated methods (getInstanceState, waitForInstanceStart, waitForInstanceCompletion,
   // purgeInstance) are intentionally not overridden — they fall through to the parent
   // implementation without any observation.
+
+  // -------------------------------------------------------------------------
+  // gRPC interceptor: injects the current OTel span's traceparent into headers
+  // -------------------------------------------------------------------------
+
+  /**
+   * A gRPC {@link ClientInterceptor} that reads the current OTel span from the thread-local
+   * context (set by {@link Observation#openScope()}) and injects its W3C {@code traceparent},
+   * {@code tracestate}, and {@code grpc-trace-bin} headers into every outbound RPC call.
+   *
+   * <p>The interceptor is stateless: it reads {@link Span#current()} lazily at call time, so the
+   * same instance can be shared across all calls on the channel.
+   */
+  private static final class OtelTracingClientInterceptor implements ClientInterceptor {
+
+    @Override
+    public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(
+        MethodDescriptor<ReqT, RespT> method, CallOptions options, Channel channel) {
+      return new ForwardingClientCall.SimpleForwardingClientCall<>(channel.newCall(method, options)) {
+        @Override
+        public void start(Listener<RespT> responseListener, Metadata headers) {
+          SpanContext spanCtx = Span.current().getSpanContext();
+          if (spanCtx.isValid()) {
+            // Build a Reactor Context with the OTel span's values and delegate to GrpcHelper,
+            // which writes traceparent, tracestate AND grpc-trace-bin (the binary format that
+            // older Dapr sidecar versions require for gRPC trace propagation).
+            Context reactorCtx = Context.of("traceparent", formatW3cTraceparent(spanCtx));
+            String traceState = formatTraceState(spanCtx);
+            if (!traceState.isEmpty()) {
+              reactorCtx = reactorCtx.put("tracestate", traceState);
+            }
+            GrpcHelper.populateMetadata(reactorCtx, headers);
+          }
+          super.start(responseListener, headers);
+        }
+      };
+    }
+
+    private static String formatW3cTraceparent(SpanContext ctx) {
+      return "00-" + ctx.getTraceId() + "-" + ctx.getSpanId()
+          + "-" + ctx.getTraceFlags().asHex();
+    }
+
+    private static String formatTraceState(SpanContext spanCtx) {
+      if (spanCtx.getTraceState().isEmpty()) {
+        return "";
+      }
+      StringBuilder sb = new StringBuilder();
+      spanCtx.getTraceState().forEach((k, v) -> {
+        if (sb.length() > 0) {
+          sb.append(',');
+        }
+        sb.append(k).append('=').append(v);
+      });
+      return sb.toString();
+    }
+  }
 }
