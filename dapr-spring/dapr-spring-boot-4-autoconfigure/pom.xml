@@ -90,8 +90,8 @@
       <optional>true</optional>
     </dependency>
     <dependency>
-      <groupId>io.opentelemetry</groupId>
-      <artifactId>opentelemetry-api</artifactId>
+      <groupId>io.dapr.spring</groupId>
+      <artifactId>dapr-spring-boot-observation</artifactId>
       <optional>true</optional>
     </dependency>
     <dependency>

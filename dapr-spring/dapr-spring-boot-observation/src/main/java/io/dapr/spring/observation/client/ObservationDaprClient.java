@@ -11,7 +11,7 @@
 limitations under the License.
 */
 
-package io.dapr.spring.boot4.autoconfigure.client;
+package io.dapr.spring.observation.client;
 
 import io.dapr.client.DaprClient;
 import io.dapr.client.domain.BulkPublishRequest;
@@ -128,31 +128,12 @@ public class ObservationDaprClient implements DaprClient {
     if (spanCtx == null || !spanCtx.isValid()) {
       return ctx;
     }
-    ctx = ctx.put("traceparent", formatW3cTraceparent(spanCtx));
-    String traceState = formatTraceState(spanCtx);
+    ctx = ctx.put("traceparent", TraceContextFormat.formatW3cTraceparent(spanCtx));
+    String traceState = TraceContextFormat.formatTraceState(spanCtx);
     if (!traceState.isEmpty()) {
       ctx = ctx.put("tracestate", traceState);
     }
     return ctx;
-  }
-
-  private static String formatW3cTraceparent(SpanContext spanCtx) {
-    return "00-" + spanCtx.getTraceId() + "-" + spanCtx.getSpanId()
-        + "-" + spanCtx.getTraceFlags().asHex();
-  }
-
-  private static String formatTraceState(SpanContext spanCtx) {
-    if (spanCtx.getTraceState().isEmpty()) {
-      return "";
-    }
-    StringBuilder sb = new StringBuilder();
-    spanCtx.getTraceState().forEach((k, v) -> {
-      if (sb.length() > 0) {
-        sb.append(',');
-      }
-      sb.append(k).append('=').append(v);
-    });
-    return sb.toString();
   }
 
   private static String safe(String value) {

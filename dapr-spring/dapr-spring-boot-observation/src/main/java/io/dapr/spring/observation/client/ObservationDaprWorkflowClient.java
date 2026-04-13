@@ -11,7 +11,7 @@
 limitations under the License.
 */
 
-package io.dapr.spring.boot.autoconfigure.client;
+package io.dapr.spring.observation.client;
 
 import io.dapr.config.Properties;
 import io.dapr.internal.opencensus.GrpcHelper;
@@ -58,6 +58,9 @@ import java.util.concurrent.TimeoutException;
  */
 public class ObservationDaprWorkflowClient extends DaprWorkflowClient {
 
+  private static final OtelTracingClientInterceptor TRACING_INTERCEPTOR =
+      new OtelTracingClientInterceptor();
+
   private final ObservationRegistry observationRegistry;
 
   /**
@@ -68,7 +71,7 @@ public class ObservationDaprWorkflowClient extends DaprWorkflowClient {
    */
   public ObservationDaprWorkflowClient(Properties properties,
                                         ObservationRegistry observationRegistry) {
-    super(properties, new OtelTracingClientInterceptor());
+    super(properties, TRACING_INTERCEPTOR);
     this.observationRegistry = Objects.requireNonNull(observationRegistry,
         "observationRegistry must not be null");
   }
@@ -360,8 +363,9 @@ public class ObservationDaprWorkflowClient extends DaprWorkflowClient {
             // Build a Reactor Context with the OTel span's values and delegate to GrpcHelper,
             // which writes traceparent, tracestate AND grpc-trace-bin (the binary format that
             // older Dapr sidecar versions require for gRPC trace propagation).
-            Context reactorCtx = Context.of("traceparent", formatW3cTraceparent(spanCtx));
-            String traceState = formatTraceState(spanCtx);
+            Context reactorCtx = Context.of("traceparent",
+                TraceContextFormat.formatW3cTraceparent(spanCtx));
+            String traceState = TraceContextFormat.formatTraceState(spanCtx);
             if (!traceState.isEmpty()) {
               reactorCtx = reactorCtx.put("tracestate", traceState);
             }
@@ -370,25 +374,6 @@ public class ObservationDaprWorkflowClient extends DaprWorkflowClient {
           super.start(responseListener, headers);
         }
       };
-    }
-
-    private static String formatW3cTraceparent(SpanContext ctx) {
-      return "00-" + ctx.getTraceId() + "-" + ctx.getSpanId()
-          + "-" + ctx.getTraceFlags().asHex();
-    }
-
-    private static String formatTraceState(SpanContext spanCtx) {
-      if (spanCtx.getTraceState().isEmpty()) {
-        return "";
-      }
-      StringBuilder sb = new StringBuilder();
-      spanCtx.getTraceState().forEach((k, v) -> {
-        if (sb.length() > 0) {
-          sb.append(',');
-        }
-        sb.append(k).append('=').append(v);
-      });
-      return sb.toString();
     }
   }
 }
