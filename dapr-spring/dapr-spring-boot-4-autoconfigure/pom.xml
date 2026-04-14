@@ -92,7 +92,6 @@
     <dependency>
       <groupId>io.dapr.spring</groupId>
       <artifactId>dapr-spring-boot-observation</artifactId>
-      <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>io.micrometer</groupId>
