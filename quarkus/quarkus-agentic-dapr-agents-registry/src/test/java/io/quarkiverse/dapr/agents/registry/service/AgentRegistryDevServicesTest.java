@@ -7,7 +7,11 @@ import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
+import io.dapr.utils.TypeRef;
+
 import java.time.Duration;
+import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
@@ -115,6 +119,25 @@ class AgentRegistryDevServicesTest {
                 assertThat(schema.getAgent().getFramework()).isEqualTo("langchain4j");
                 assertThat(schema.getRegisteredAt()).isNotBlank();
             }
+        });
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void teamIndexShouldContainAllRegisteredAgents() {
+        String[] expectedAgents = {"test-agent-with-prompt", "test-agent-simple", "TestAgent.defaultNameAgent"};
+
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+            State<Map> indexState = daprClient.getState(
+                    STATE_STORE, "agents:" + TEAM + ":_index", TypeRef.get(Map.class)).block();
+            assertThat(indexState).isNotNull();
+            assertThat(indexState.getValue()).isNotNull();
+
+            Map<String, Object> indexData = (Map<String, Object>) indexState.getValue();
+            assertThat(indexData).containsKey("agents");
+
+            List<String> agentsList = (List<String>) indexData.get("agents");
+            assertThat(agentsList).containsExactlyInAnyOrder(expectedAgents);
         });
     }
 }

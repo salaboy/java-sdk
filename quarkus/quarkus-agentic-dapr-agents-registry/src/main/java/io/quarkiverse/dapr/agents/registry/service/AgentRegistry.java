@@ -14,6 +14,9 @@ limitations under the License.
 package io.quarkiverse.dapr.agents.registry.service;
 
 import io.dapr.client.DaprClient;
+import io.dapr.client.domain.GetStateRequest;
+import io.dapr.client.domain.State;
+import io.dapr.utils.TypeRef;
 import io.quarkiverse.dapr.agents.registry.model.AgentMetadata;
 import io.quarkiverse.dapr.agents.registry.model.AgentMetadataSchema;
 import io.quarkus.runtime.StartupEvent;
@@ -31,6 +34,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -254,14 +258,57 @@ public class AgentRegistry {
   }
 
   /**
-   * Registers an agent schema in the Dapr state store.
+   * Registers an agent schema in the Dapr state store and updates the team index.
+   *
+   * <p>Two-step operation matching the Python dapr-agents registration protocol:
+   * <ol>
+   *   <li>Save per-agent metadata key ({@code agents:{team}:{name}})</li>
+   *   <li>Update the team index key ({@code agents:{team}:_index}) adding this agent name</li>
+   * </ol>
+   *
+   * <p>The team index is how dapr-agents discovers peers in multi-agent workflows.
    *
    * @param schema the agent metadata schema to register
    */
+  @SuppressWarnings("unchecked")
   public void registerAgent(AgentMetadataSchema schema) {
-    String key = "agents:" + team + ":" + schema.getName();
-    LOG.infof("Registering agent: %s", key);
-    client.saveState(statestore, key, null, schema,
-        Map.of("contentType", "application/json"), null).block();
+    String registryPrefix = "agents:" + team;
+    Map<String, String> meta = Map.of(
+        "contentType", "application/json",
+        "partitionKey", registryPrefix);
+
+    // Step 1: Save per-agent metadata key
+    String agentKey = registryPrefix + ":" + schema.getName();
+    LOG.infof("Registering agent: %s", agentKey);
+    client.saveState(statestore, agentKey, null, schema, meta, null).block();
+
+    // Step 2: Update team index (adds agent name to the list)
+    String indexKey = registryPrefix + ":_index";
+    GetStateRequest getRequest = new GetStateRequest(statestore, indexKey)
+        .setMetadata(meta);
+    State<Map> indexState = client.getState(getRequest, TypeRef.get(Map.class)).block();
+
+    Map<String, Object> indexData;
+    if (indexState != null && indexState.getValue() != null) {
+      indexData = new HashMap<>((Map<String, Object>) indexState.getValue());
+    } else {
+      indexData = new HashMap<>();
+    }
+
+    List<String> agentsList;
+    Object existing = indexData.get("agents");
+    if (existing instanceof List) {
+      agentsList = new ArrayList<>((List<String>) existing);
+    } else {
+      agentsList = new ArrayList<>();
+    }
+
+    if (!agentsList.contains(schema.getName())) {
+      agentsList.add(schema.getName());
+      indexData.put("agents", agentsList);
+      String etag = (indexState != null) ? indexState.getEtag() : null;
+      client.saveState(statestore, indexKey, etag, indexData, meta, null).block();
+      LOG.infof("Updated team index '%s' with agent '%s'", indexKey, schema.getName());
+    }
   }
 }
