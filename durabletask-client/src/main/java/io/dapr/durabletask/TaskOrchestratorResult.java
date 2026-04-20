@@ -13,15 +13,15 @@ limitations under the License.
 
 package io.dapr.durabletask;
 
-import io.dapr.durabletask.implementation.protobuf.OrchestratorService;
+import io.dapr.durabletask.implementation.protobuf.OrchestratorActions;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-final class TaskOrchestratorResult {
+public final class TaskOrchestratorResult {
 
-  private final Collection<OrchestratorService.OrchestratorAction> actions;
+  private final Collection<OrchestratorActions.WorkflowAction> actions;
 
   private final String customStatus;
 
@@ -29,7 +29,15 @@ final class TaskOrchestratorResult {
 
   private final List<String> patches;
 
-  public TaskOrchestratorResult(Collection<OrchestratorService.OrchestratorAction> actions,
+  /**
+   * Constructor.
+   *
+   * @param actions      the actions to take
+   * @param customStatus the custom status to return
+   * @param version      the orchestrator version
+   * @param patches      the patches to apply
+   */
+  public TaskOrchestratorResult(Collection<OrchestratorActions.WorkflowAction> actions,
                                 String customStatus, String version, List<String> patches) {
     this.actions = Collections.unmodifiableCollection(actions);
     this.customStatus = customStatus;
@@ -37,7 +45,7 @@ final class TaskOrchestratorResult {
     this.patches = patches;
   }
 
-  public Collection<OrchestratorService.OrchestratorAction> getActions() {
+  public Collection<OrchestratorActions.WorkflowAction> getActions() {
     return this.actions;
   }
 
